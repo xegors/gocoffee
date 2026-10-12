@@ -1,48 +1,125 @@
-# GoCoffee Evolution Roadmap & Career Alignment 🚀
+# Roadmap GoCoffee
 
-This roadmap outlines the phased evolution of the **GoCoffee** project. Each stage is intentionally mapped to critical industry requirements for a **Junior/Middle Go Developer**, transforming a simple script into a robust, cloud-native microservice architecture.
+Дорожная карта проекта. Каждый этап — это навык, а не только фича.
+Подзадачи внутри этапа рассчитаны на 20–40 минут работы.
+
+**Тестирование не отложено на потом:** тест пишется вместе с кодом в том же
+этапе. Ретроспективное покрытие не случится, а навык без практики не закрепится.
 
 ---
 
-## Stage 1: Foundation & Clean Architecture (Current Phase 📍)
-* **Project Scope:** Core domain logic, file-based persistence (`encoding/json`), repository interfaces, FIFO cart management, and payment strategy patterns.
-* **Skills Mastered:** Go syntax, pointers, slices, interfaces, error handling, file I/O, and software design principles (SOLID, Separation of Concerns).
-* **Resume Impact:** Demonstrates strong command of idiomatic Go and clean architectural separation.
+## Stage 1 — Foundation (текущий этап)
 
-## Stage 2: Terminal-First SaaS & SSH Authentication
-* **Project Scope:** Implementing an SSH server (`charmbracelet/wish`) where users connect directly via terminal (`ssh coffee@gocoffee.local`), authenticating via SSH public keys and managing user sessions automatically.
-* **Skills Mastered:** Network protocols, SSH handling, key-based identity management, and terminal application workflows.
-* **Resume Impact:** **Network technologies, Linux console mastery**, and standout portfolio uniqueness.
+Чистая архитектура, домен, JSON-хранилище, FIFO-корзина, платёжная стратегия.
 
-## Stage 3: Interactive TUI (Terminal User Interface)
-* **Project Scope:** Building a modern, interactive terminal UI using the Charm ecosystem (`Bubble Tea`, `Lip Gloss`), allowing users to navigate catalogs, manage carts, and checkout seamlessly within their SSH or local session.
-* **Skills Mastered:** State management (The Elm Architecture), event loops, and command-line aesthetics.
-* **Resume Impact:** Advanced command-line proficiency and UX design in terminal environments.
+**Подзадачи**
 
-## Stage 4: HTTP REST API
-* **Project Scope:** Exposing the business logic over HTTP using Go's standard `net/http` or lightweight routers (`chi`), handling JSON payloads, status codes, and middleware.
-* **Skills Mastered:** HTTP protocol mechanics, RESTful design principles, routing, and request validation.
-* **Resume Impact:** **Working with HTTP REST, gRPC**.
+| # | Что | Статус |
+|---|---|---|
+| 0 | `go mod init`, `.gitignore`, GitHub-репозиторий | готово |
+| 1 | `Item`, `Category` + тесты | следующий |
+| 2 | `Wallet`, анонимное встраивание в `User` + тесты | |
+| 3 | `Cart` как срез, FIFO, дедупликация, удаление + тесты | |
+| 4 | Контракт `Payer`, оплата кошельком + тесты | |
+| 5 | `storage`: репозиторий каталога на `encoding/json` + тесты | |
+| 6 | `storage`: репозиторий пользователей + тесты | |
+| 7 | `ShopService`: `AddToCart`, `RemoveFromCart`, `Checkout` + тесты | |
+| 8 | `cmd/gocoffee/main.go`, сид-данные, первый запуск | |
 
-## Stage 5: Relational Database Migration (SQL & PostgreSQL)
-* **Project Scope:** Transitioning from JSON text files to PostgreSQL, designing normalized schemas (`users`, `items`, `orders`), writing database migrations, and ensuring ACID compliance via transactions.
-* **Skills Mastered:** SQL queries, `pgx`/`sqlx` drivers, transaction management (ensuring atomicity during checkout), and database migrations.
-* **Resume Impact:** **SQL/PostgreSQL**, data consistency, and transactional safety.
+**Критерий приёмки**
 
-## Stage 6: Testing & Quality Assurance
-* **Project Scope:** Writing comprehensive unit and integration tests for `ShopService` using Go's built-in `testing` package and mock generation tools. Practicing structured Git workflows (Git Flow / GitLab Flow).
-* **Skills Mastered:** Table-driven testing, mocking dependencies via interfaces, code reviews, and branching strategies.
-* **Resume Impact:** **Writing tests for your own code**, **Git Flow / GitLab Flow**.
+- `gofmt -l .` пуст, `go vet ./...` молчит
+- каждый метод домена покрыт тестом, включая пустые срезы и границы
+- `go run ./cmd/gocoffee` стартует, создаёт `data/` и делает полный цикл:
+  добавить в корзину → убрать → оплатить
+- домен не импортирует ничего, кроме стандартной библиотеки
 
-## Stage 7: Containerization & Infrastructure (Docker & Linux)
-* **Project Scope:** Packaging the application with multi-stage Docker builds, orchestrating multi-container environments using `docker-compose` alongside PostgreSQL.
-* **Skills Mastered:** Dockerfiles, service isolation, environment configuration, and Linux environment management.
-* **Resume Impact:** **Confident use of the Linux console**, containerization, and deployment readiness.
+**Освоено:** синтаксис Go, указатели, срезы, интерфейсы, ошибки, файловое
+ввод-вывод, тесты, SOLID, разделение ответственности.
 
-## Stage 8: Enterprise-Grade Architecture (Redis, Kafka, gRPC)
-* **Project Scope:** 
-  * Integrating **Redis** for active cart caching and session management.
-  * Introducing **gRPC** for high-performance internal service communication.
-  * Implementing **Kafka** for event-driven architecture (emitting `OrderCreated` events for asynchronous worker notification processing).
-* **Skills Mastered:** Caching strategies, event-driven microservices, message brokers, and high-load patterns.
-* **Resume Impact:** **Understanding microservice application architecture**, Redis, and Kafka experience.
+---
+
+## Stage 2 — SSH-сервер и терминальный доступ
+
+SSH-сервер (`charmbracelet/wish`), к которому подключаются по
+`ssh coffee@gocoffee.local`. Аутентификация по публичным ключам, управление
+сессиями.
+
+**Освоено:** сетевые протоколы, обработка SSH, управление идентификацией,
+жизненный цикл сессий.
+
+**Критерий приёмки:** сервер принимает подключение по ключу, создаёт
+пользователя при первом входе, изолирует сессии друг от друга.
+
+---
+
+## Stage 3 — Интерактивный TUI
+
+Каталог, корзина и оформление заказа в терминале на Charm (`Bubble Tea`,
+`Lip Gloss`).
+
+**Освоено:** управление состоянием по Elm Architecture, цикл событий,
+терминальный UX.
+
+**Критерий приёмки:** весь сценарий покупки проходит в TUI, корзина
+переживает переподключение.
+
+---
+
+## Stage 4 — HTTP REST API
+
+Выставление той же бизнес-логики наружу: `net/http` или `chi`, JSON-контракты,
+коды ответов, middleware.
+
+**Освоено:** механика HTTP, проектирование REST, маршрутизация, валидация.
+
+**Критерий приёмки:** CRUD-эндпоинты работают, слой `service` не меняется ни
+одной строкой.
+
+---
+
+## Stage 5 — Переход на PostgreSQL
+
+Нормализованная схема (`users`, `items`, `orders`), миграции, транзакции с
+атомарностью на этапе оплаты.
+
+**Освоено:** SQL, драйверы `pgx`/`sqlx`, управление транзакциями, миграции.
+
+**Критерий приёмки:** при сбое оплаты заказ не сохраняется, деньги не списываются.
+
+> Здесь всплывают долги Stage 1: идентификатор товара и точность денег.
+
+---
+
+## Stage 6 — Качество и процесс
+
+Углубление тестов: табличные тесты, моки, границы покрытия. Git Flow.
+
+**Освоено:** table-driven тесты, моки через интерфейсы, ревью, ветвление.
+
+**Критерий приёмки:** покрытие домена и сервиса выше 80%.
+
+---
+
+## Stage 7 — Контейнеризация
+
+Multi-stage сборка Docker, `docker-compose` с PostgreSQL.
+
+**Освоено:** Dockerfile, изоляция сервисов, конфигурация окружения.
+
+**Критерий приёмки:** `docker compose up` поднимает всё с нуля.
+
+---
+
+## Stage 8 — Enterprise
+
+Три независимые темы. **Выбрать одну** — остальное не тянуть в одинаковый
+дедлайн.
+
+- **8a. Redis** — кэш активных корзин и сессий. Навык: стратегии кэширования.
+- **8b. gRPC** — взаимодействие сервисов. Навык: protobuf, кодогенерация.
+- **8c. Kafka** — событийная модель, событие `OrderCreated`. Навык: брокеры
+  сообщений, идемпотентность потребителей.
+
+**Критерий приёмки:** выбранная тема работает в прод-конфигурации и не ломает
+уже написанное.
