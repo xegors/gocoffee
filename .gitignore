@@ -1,0 +1,32 @@
+# Бинарники и сборка
+/gocoffee
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+
+# Покрытие и профилирование
+*.out
+coverage.*
+
+# Локальное окружение и секреты
+.env
+.env.*
+!.env.example
+
+# Данные и кэши
+data/tmp/
+*.log
+
+# Редакторы и ОС
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Go
+vendor/
