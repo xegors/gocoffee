@@ -1,55 +1,167 @@
-# GoCoffee ☕
+# GoCoffee
 
-> A minimalist, terminal-first specialty coffee shop backend built in idiomatic Go, following Clean Architecture principles.
+> Терминальный backend магазина зерна спешалти-кофе на чистом Go, построенный по принципам Clean Architecture.
 
-## 🚀 Project Overview
+## Статус проекта
 
-**GoCoffee** is an educational yet production-grade backend application simulating a specialty coffee shop. Designed as a growing pet project, it serves as a practical sandbox for mastering modern Go development, software design patterns, concurrent programming, and infrastructure technologies.
+**Stage 1 «Foundation» — в работе.** Кода пока нет: идёт разработка доменного слоя.
 
-Rather than relying on over-engineered frameworks or monolithic scripts, GoCoffee is structured from the ground up to reflect professional software engineering standards—featuring clear boundaries between business logic, storage layers, and user interfaces.
+| Документ | О чём |
+|---|---|
+| [ROADMAP.md](ROADMAP.md) | Этапы, подзадачи, критерии приёмки |
+| [LEARNING.md](LEARNING.md) | Журнал: что освоено, где спотыкаюсь |
+| [AGENTS.md](AGENTS.md) | Правила работы над проектом |
 
----
+## Что это
 
-## 🏗️ Architectural Principles
+Учебный проект без продакшн-амбиций. Не кофейня, которая варит кофе в чашках, а
+магазин зерна: каталог обжаренного кофе, мерч, аксессуары для заваривания,
+наборы и слепые пакеты. Подписка на зерно вынесена в отдельный этап.
 
-- **Clean Architecture:** Strict separation of concerns across layers (`domain`, `storage`, `service`, and presentation).
-- **Idiomatic Go:** Minimalist structures, pointer receivers, slice-based data manipulation (FIFO carts), and anonymous field embedding (field promotion) for clean, flat data models.
-- **Dependency Inversion:** Use of interfaces (such as `Payer` and repositories) to decouple business logic from external implementations.
-- **Pluggable Interfaces:** Extensible payment strategy pattern allowing seamless integration of internal wallets, cryptocurrencies, and bank cards.
+Корзина с FIFO-логикой, несколько способов оплаты, хранение в JSON.
 
----
+Цель — не работающая программа, а понимание того, почему каждое решение
+выбрано. Скорость поставки здесь вторична.
 
-## 📂 Project Structure
+## Требования
+
+Go 1.27 или новее. Внешних зависимостей нет — только стандартная библиотека.
+
+## Быстрый старт
+
+На данный момент доступны только проверки качества:
+
+```bash
+gofmt -l .      # должно быть пусто
+go vet ./...    # пока предупреждает «no packages» — это ожидаемо
+```
+
+Запуск приложения (`go run ./cmd/gocoffee`) появится в конце Stage 1.
+
+## Архитектура
+
+Зависимости идут строго в одну сторону. Домен не знает ни о ком:
+
+```text
+cmd/gocoffee/main.go
+        │
+        ▼
+internal/service ──────────► internal/domain ◄────────── internal/storage
+        │                        ▲                             ▲
+        └────────────────────────┴─────────────────────────────┘
+                     main знает обо всех слоях
+```
+
+`storage` реализует контракты, объявленные в `service`. `domain` не импортирует
+`encoding/json`: стандартная библиотека разрешена, формат хранения — нет.
+
+## Структура
 
 ```text
 gocoffee/
-├── cmd/
-│   └── gocoffee/
-│       └── main.go          # Application entry point & wiring
+├── cmd/gocoffee/          # точка входа и сборка зависимостей
 ├── internal/
-│   ├── domain/              # Core business entities, models & interfaces
-│   │   ├── user.go          # User, Wallet, Cart (FIFO), Discount
-│   │   ├── item.go          # Coffee products, categories, ItemRepository
-│   │   └── payment.go       # Payer interface & wallet payment logic
-│   ├── storage/             # Data persistence layers
-│   │   ├── json_user.go     # JSON file-based user storage
-│   │   └── json_item.go     # JSON file-based item catalog storage
-│   └── service/             # Business coordination & orchestration
-│       └── shop.go          # ShopService (AddToCart, RemoveFromCart, Checkout)
-├── data/                    # Local persistent JSON state
-│   ├── users.json
-│   └── items.json
-├── go.mod
-└── README.md
+│   ├── domain/            # сущности и правила бизнес-логики
+│   │   ├── item.go        # Item, Category, BrewMethod
+│   │   ├── money.go       # Money — целые рубли
+│   │   ├── user.go        # User, Wallet (анонимное встраивание)
+│   │   ├── cart.go        # Cart = []CartItem, FIFO
+│   │   ├── payment.go     # контракт Payer
+│   │   └── errors.go      # ошибки домена
+│   ├── storage/           # реализации репозиториев на encoding/json
+│   │   ├── json_user.go
+│   │   └── json_item.go
+│   └── service/           # ShopService: AddToCart, RemoveFromCart, Checkout
+├── data/                  # JSON-состояние, создаётся при первом запуске
+└── go.mod
 ```
 
----
+## Доменные модели
 
-## 🛠️ Core Domain Models
+### Товар
 
-1. **User & Wallet (Anonymous Embedding):**
-   `User` embeds `Wallet` anonymously, enabling flat field access (`user.Balance`, `user.BonusBalance`) while maintaining clean data structures.
-2. **FIFO Cart:**
-   `Cart` is implemented as a slice of `CartItem` (`[]CartItem`), guaranteeing strict first-in, first-out ordering with built-in deduplication and removal methods.
-3. **Payment Strategy (`Payer`):**
-   The `Checkout` process accepts any type satisfying the `Payer` interface, abstracting away the underlying transaction mechanism.
+```text
+Item
+├── ID           идентификатор-slug, уникален в каталоге
+├── Name         название для показа
+├── Category     категория, закрытый набор
+├── Price        цена за упаковку, целые рубли
+├── WeightGrams  масса нетто упаковки, 0 = неприменимо
+└── Brew         метод: фильтр или эспрессо, "" = неприменимо
+```
+
+### Категории
+
+Набор закрытый и задан владельцем. **Набор товаров открытый, набор категорий —
+нет:** новых позиций будет сотни, новых категорий не будет никогда. Именно
+поэтому категория валидируется, а товар — нет.
+
+| Значение | Что в неё |
+|---|---|
+| `coffee` | зёрна: имеет вес и метод обжарки |
+| `accessories` | воронки, фильтры, кофемолки |
+| `sets` | наборы: цена фиксированная, состав не влияет на модель |
+| `surprise` | слепой пакет: содержимое определяется при упаковке |
+
+`merch` на Stage 1 нет: футболки и кружки с размерами и цветами требуют
+вариантов товара, а это отдельная модель. Категория добавится на Stage 6.
+
+### Метод обжарки
+
+`BrewMethod` — свойство зерна, а не категории. Эфиопия иргачеффе идёт на фильтр,
+Бразилия сантос — на эспрессо. Один товар, один метод.
+
+### Деньги
+
+`Money` — целые рубли. Цена `180` хранится как `180`, погрешности нет.
+Именованный тип держит дисциплину: сложить рубли с количеством чашек не
+получится.
+
+### Корзина
+
+`Cart` — срез `[]CartItem`. Порядок добавления сохраняется самим фактом среза;
+дедупликация и удаление — линейные проходы.
+
+### Оплата
+
+`Checkout` принимает любой тип, удовлетворяющий контракту `Payer`. Контракт
+живёт в `domain/payment.go`, реализация кошелька — рядом с `Wallet`.
+
+## Принятые решения
+
+| Решение | Почему | Чем платим |
+|---|---|---|
+| `Category` — закрытый набор с `Valid()` | Категории заданы владельцем и не меняются | Новая категория требует правки кода и теста |
+| Набор товаров открыт, набор категорий закрыт | Товаров сотни, категорий четыре | Разные данные требуют разной строгости |
+| Идентификатор — строковый slug | Доменный ID не совпадает с первичным ключом БД | Уникальность проверяется при загрузке |
+| `Brew` и `WeightGrams` — поля `Item` | Проще, чем отдельные типы на категорию | Поля пустые у неприменимых категорий |
+| Мерч вынесен на Stage 6 | Stage 1 не должен быть этапом для интернет-магазина | Возврат к задаче через пять этапов |
+| `Money` — целые рубли | Целочисленная арифметика, путь к SQL без плавающей точки | Копейки не выражаются |
+| `Cart = []CartItem` | FIFO бесплатно, порядок добавления сохраняется сам собой | Дедупликация и поиск — линейный проход |
+| Анонимное встраивание `Wallet` в `User` | Плоский доступ без лишних полей | Промоушен полей неявен |
+| `Payer` как интерфейс | Платёжная стратегия | Реализации подменяются без правок сервиса |
+| Крипта — конвертация по курсу в момент оплаты | Каталог один, вторая цена не хранится | Нужны `RateProvider`, правило округления, курс в заказе |
+| Контракты объявляет потребитель | Dependency Inversion: домен не описывает то, чем пользуются другие | Больше типов, границы честные |
+| Тесты пишутся вместе с кодом | Навык не закрепится, если отложить | Дисциплина в каждой задаче |
+
+## Что осталось открытым
+
+- **Подписка вынесена в отдельный этап.** Из неё вырастут регулярные списания,
+  пропуск месяца и отмена — это самостоятельная подсистема, а не категория.
+- **Мерч и варианты товара — Stage 6.** «Размер и цвет — тот же товар» означает,
+  что в каталоге две сущности: товар и вариант. Пока вариантов нет, `Item` —
+  это и есть покупаемая единица. Открытый вопрос к Stage 6: **одна ли цена у
+  размеров M и L.** Если да, варианты обязательны; если у каждого своя цена,
+  плоских товаров хватит.
+- **`Brew` и `WeightGrams` — плоская структура.** Поля осмысленны только для
+  зерна; у воронки и набора они пустые. Разделять типы по категориям рано: это
+  полиморфный каталог, который потребует дискриминатора типа в JSON. Пересмотр
+  назначен на Stage 7 вместе с переходом на базу.
+- **Цена за упаковку, а не за килограмм.** Предполагается, что `WeightGrams`
+  описывает упаковку, а `Price` — цену этой упаковки. Если понадобится цена за
+  килограмм, это отдельное решение.
+- **Слой `presentation`.** Появится на Stage 2.
+
+## Лицензия
+
+MIT — см. [LICENSE](LICENSE).
