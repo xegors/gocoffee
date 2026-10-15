@@ -69,10 +69,38 @@ func TestWalletWithdraw(t *testing.T) {
 	}
 }
 
-// TestUserPromotesWallet:
-// - поле Balance доступно как user.Balance;
-// - Deposit и Withdraw вызываются через User;
-// - нулевой Wallet внутри User безопасен.
+func TestWalletPay(t *testing.T) {
+	tests := []struct {
+		name        string
+		initial     domain.Money
+		amount      domain.Money
+		wantBalance domain.Money
+		wantErr     error
+	}{
+		{name: "regular withdraw", initial: 4000, amount: 900, wantBalance: 4000 - 900},
+		{name: "withdraw all balance", initial: 1000, amount: 1000, wantBalance: 0},
+		{name: "withdraw over a balance", initial: 1000, amount: 1500, wantBalance: 1000,
+			wantErr: domain.ErrInsufficientFunds},
+		{name: "zero withdraw", initial: 1000, amount: 0, wantBalance: 1000,
+			wantErr: domain.ErrInvalidAmount},
+		{name: "negative withdraw", initial: 2340, amount: -200, wantBalance: 2340,
+			wantErr: domain.ErrInvalidAmount},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := domain.Wallet{Balance: tt.initial}
+			err := w.Pay(tt.amount)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("|got %10q| want %10q|", err, tt.wantErr)
+			}
+			if w.Balance != tt.wantBalance {
+				t.Errorf("|got %10d| want %10d|", w.Balance, tt.wantBalance)
+			}
+		})
+	}
+}
+
 func TestUserPromotesWallet(t *testing.T) {
 	u := domain.User{ID: "bob"}
 	err := u.Deposit(100)

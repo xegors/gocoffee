@@ -48,3 +48,8 @@ func (w *Wallet) Withdraw(m Money) error {
 	}
 	return ErrInsufficientFunds
 }
+
+// Pay charges amount from the wallet.
+//
+// It delegates to Withdraw, so manual withdrawal and wallet payment cannot diverge.
+func (w *Wallet) Pay(m Money) error { return w.Withdraw(m) }
