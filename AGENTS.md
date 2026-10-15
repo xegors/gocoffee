@@ -121,7 +121,11 @@
   `feat(domain): add FIFO cart`, `fix(storage): treat missing file as empty state`,
   `refactor(service): extract total`, `docs(readme): add run instructions`,
   `test(domain): cover empty cart cases`.
-- Ветка на этап: `stage/1-foundation`, `stage/2-ssh` и далее.
+- Для задачи создаётся короткая ветка от `main`, например `feat/2a-wallet`.
+- Готовая задача вливается в `main` через pull request.
+- По возможности используй rebase merge: он сохраняет коммиты и их объяснения.
+- Перед удалением ветки проверь, что важные коммиты есть в `main` или сохранены
+  архивным тегом. Squash merge объединяет историю и может потерять тела коммитов.
 - Коммит и push — **только по твоей явной команде**.
 - Никогда amend, force-push и скип хуков без отдельного указания.
 - Секреты в репозиторий не кладём: ключи, токены, пароли.
