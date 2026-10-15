@@ -19,4 +19,19 @@ var (
 	// ErrInsufficientFunds is returned by Withdraw when the requested amount
 	// exceeds the wallet balance.
 	ErrInsufficientFunds = errors.New("insufficient funds")
+
+	// ErrInvalidItem is returned by Cart.Add when the item has no ID.
+	ErrInvalidItem = errors.New("invalid item")
+
+	// ErrInvalidQuantity is returned by Cart.Add or Cart.Remove when the
+	// requested quantity is non-positive, or when adding it would overflow int.
+	ErrInvalidQuantity = errors.New("invalid quantity")
+
+	// ErrItemNotInCart is returned by Cart.Remove when the requested item is
+	// not present in the cart.
+	ErrItemNotInCart = errors.New("item is not in cart")
+
+	// ErrInsufficientQuantity is returned by Cart.Remove when the requested
+	// quantity exceeds the quantity of that item in the cart.
+	ErrInsufficientQuantity = errors.New("insufficient quantity")
 )
