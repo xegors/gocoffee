@@ -11,4 +11,12 @@ var (
 	// none of the known roast methods. An empty string is not an error: it
 	// resolves to BrewNone.
 	ErrUnknownBrew = errors.New("unknown brew method")
+
+	// ErrInvalidAmount is returned by Deposit or Withdraw when the amount is
+	// zero or negative.
+	ErrInvalidAmount = errors.New("invalid amount")
+
+	// ErrInsufficientFunds is returned by Withdraw when the requested amount
+	// exceeds the wallet balance.
+	ErrInsufficientFunds = errors.New("insufficient funds")
 )
