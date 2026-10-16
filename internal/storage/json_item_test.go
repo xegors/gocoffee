@@ -27,7 +27,7 @@ func basicWant() []domain.Item {
 		{
 			ID: "ethiopia-chelchele-250", Name: "Ethiopia Chelchele",
 			Price: 799, WeightGrams: 250,
-			Category: domain.CategoryCoffee, Brew: domain.BrewFilter},
+			Category: domain.CategoryCoffee},
 		{
 			ID: "basic-temper-57", Name: "Basic Temper 57mm",
 			Price:    1500,
@@ -35,7 +35,7 @@ func basicWant() []domain.Item {
 		{
 			ID: "random-filter-250", Name: "Random Filter Coffee",
 			Price: 850, WeightGrams: 250,
-			Category: domain.CategorySurprise, Brew: domain.BrewFilter},
+			Category: domain.CategorySurprise},
 	}
 }
 
@@ -60,9 +60,9 @@ func TestRoundTrip(t *testing.T) {
 
 func TestLoadValidFile(t *testing.T) {
 	path := writeFixture(t, "items.json", `[
-  {"id":"ethiopia-chelchele-250","name":"Ethiopia Chelchele","category":"coffee","price":799,"weight_grams":250,"brew":"filter"},
-  {"id":"basic-temper-57","name":"Basic Temper 57mm","category":"accessories","price":1500,"brew":""},
-  {"id":"random-filter-250","name":"Random Filter Coffee","category":"surprise","price":850,"weight_grams":250,"brew":"filter"}
+  {"id":"ethiopia-chelchele-250","name":"Ethiopia Chelchele","category":"coffee","price":799,"weight_grams":250},
+  {"id":"basic-temper-57","name":"Basic Temper 57mm","category":"accessories","price":1500},
+  {"id":"random-filter-250","name":"Random Filter Coffee","category":"surprise","price":850,"weight_grams":250}
 ]`)
 	repo := storage.NewItemRepository(path)
 
@@ -90,11 +90,8 @@ func TestLoadValidFile(t *testing.T) {
 	if got[0].WeightGrams != 250 {
 		t.Errorf("got[0].WeightGrams = %d, want %d", got[0].WeightGrams, 250)
 	}
-	if got[0].Brew != domain.BrewFilter {
-		t.Errorf("got[0].Brew = %q, want %q", got[0].Brew, domain.BrewFilter)
-	}
 
-	// Вторая позиция: weight_grams и brew в файле отсутствуют, ждём нули.
+	// Вторая позиция: weight_grams в файле отсутствует, ждём нули.
 	if got[1].ID != "basic-temper-57" {
 		t.Errorf("got[1].ID = %q, want %q", got[1].ID, "basic-temper-57")
 	}
@@ -109,9 +106,6 @@ func TestLoadValidFile(t *testing.T) {
 	}
 	if got[1].WeightGrams != 0 {
 		t.Errorf("got[1].WeightGrams = %d, want 0", got[1].WeightGrams)
-	}
-	if got[1].Brew != domain.BrewNone {
-		t.Errorf("got[1].Brew = %q, want %q", got[1].Brew, domain.BrewNone)
 	}
 
 	// Третья позиция: форма та же, отличаются ID и категория.
@@ -176,8 +170,8 @@ func TestLoadBrokenJSON(t *testing.T) {
 
 func TestLoadUnknownCategory(t *testing.T) {
 	path := writeFixture(t, "items.json", `[
-  {"id":"ok","category":"coffee","brew":"filter"},
-  {"id":"bad","category":"serv","brew":"filter"}
+  {"id":"ok","category":"coffee"},
+  {"id":"bad","category":"serv"}
 ]`)
 	repo := storage.NewItemRepository(path)
 
@@ -191,19 +185,6 @@ func TestLoadUnknownCategory(t *testing.T) {
 	// Индекс нужен, чтобы понять, какую позицию в файле чинить.
 	if !strings.Contains(err.Error(), "item 1") {
 		t.Errorf("error %q does not point at item 1", err)
-	}
-}
-
-func TestLoadUnknownBrew(t *testing.T) {
-	path := writeFixture(t, "items.json", `[
-  {"id":"ok","category":"coffee","brew":"filter"},
-  {"id":"bad","category":"coffee","brew":"turkish"}
-]`)
-	repo := storage.NewItemRepository(path)
-
-	_, err := repo.Load()
-	if !errors.Is(err, domain.ErrUnknownBrew) {
-		t.Fatalf("got error %v, want %v", err, domain.ErrUnknownBrew)
 	}
 }
 
@@ -257,7 +238,6 @@ func TestSaveWritesExpectedJSON(t *testing.T) {
 		Category:    domain.CategoryCoffee,
 		Price:       799,
 		WeightGrams: 250,
-		Brew:        domain.BrewFilter,
 	}}); err != nil {
 		t.Fatalf("save: %v", err)
 	}
@@ -274,8 +254,7 @@ func TestSaveWritesExpectedJSON(t *testing.T) {
     "name": "Ethiopia",
     "category": "coffee",
     "price": 799,
-    "weight_grams": 250,
-    "brew": "filter"
+    "weight_grams": 250
   }
 ]`
 	if string(got) != wantJSON {
