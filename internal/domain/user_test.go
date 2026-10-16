@@ -101,6 +101,27 @@ func TestWalletPay(t *testing.T) {
 	}
 }
 
+func TestUserValidate(t *testing.T) {
+	tests := []struct {
+		name    string
+		ID      string
+		wantErr error
+	}{
+		{name: "empty ID", ID: "", wantErr: domain.ErrInvalidUserID},
+		{name: "regular ID", ID: "some_normal_id"},
+		{name: "only spaces ID", ID: " \t \t ", wantErr: domain.ErrInvalidUserID},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := domain.User{ID: tt.ID}
+			if err := u.Validate(); !errors.Is(err, tt.wantErr) {
+				t.Errorf("got %v, want %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestUserPromotesWallet(t *testing.T) {
 	u := domain.User{ID: "bob"}
 	err := u.Deposit(100)
