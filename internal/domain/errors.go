@@ -29,4 +29,9 @@ var (
 	// ErrInsufficientQuantity is returned by Cart.Remove when the requested
 	// quantity exceeds the quantity of that item in the cart.
 	ErrInsufficientQuantity = errors.New("insufficient quantity")
+
+	// ErrInvalidUserID is returned by User.Validate when a user carries an
+	// empty ID. Such a user cannot be looked up later, so storing it is
+	// refused instead of accepting a record nobody can reach.
+	ErrInvalidUserID = errors.New("invalid user id")
 )
