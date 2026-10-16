@@ -17,7 +17,6 @@ type itemDTO struct {
 	Category    string       `json:"category"`
 	Price       domain.Money `json:"price"`
 	WeightGrams int          `json:"weight_grams"`
-	Brew        string       `json:"brew"`
 }
 
 // ItemRepository keeps the catalog in a JSON file.
@@ -43,16 +42,11 @@ func (d itemDTO) toDomain() (domain.Item, error) {
 	if err != nil {
 		return domain.Item{}, err
 	}
-	brew, err := domain.ParseBrewMethod(d.Brew)
-	if err != nil {
-		return domain.Item{}, err
-	}
 
 	return domain.Item{
 		ID:          d.ID,
 		Name:        d.Name,
 		Category:    cat,
-		Brew:        brew,
 		Price:       d.Price,
 		WeightGrams: d.WeightGrams,
 	}, nil
@@ -63,7 +57,6 @@ func fromDomain(i domain.Item) itemDTO {
 		ID:          i.ID,
 		Name:        i.Name,
 		Category:    string(i.Category),
-		Brew:        string(i.Brew),
 		Price:       i.Price,
 		WeightGrams: i.WeightGrams,
 	}
