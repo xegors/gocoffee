@@ -93,6 +93,13 @@ func (c *Cart) Remove(id string, qty int) error {
 
 // Total returns the sum of item prices multiplied by their quantities.
 // Discounts are not applied here; they are handled during checkout.
+//
+// The sum is computed without an overflow check, unlike the money additions in
+// Wallet. The two places differ deliberately: Total has no way to report a
+// failure, and silently discarding one would be worse than not checking at
+// all. Reaching the limit would take a single line item priced at nine
+// quintillion rubles. If that ever stops being absurd, the signature changes
+// first and the check follows it.
 func (c *Cart) Total() Money {
 	var total Money
 
