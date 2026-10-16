@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"errors"
+	"math"
 	"testing"
 
 	"github.com/xegors/gocoffee/internal/domain"
@@ -21,6 +22,12 @@ func TestWalletDeposit(t *testing.T) {
 			wantErr: domain.ErrInvalidAmount},
 		{name: "zero deposit", initial: 5000, amount: 0, wantBalance: 5000,
 			wantErr: domain.ErrInvalidAmount},
+		{name: "negative balance is not grown", initial: -100, amount: 50,
+			wantBalance: -100, wantErr: domain.ErrInvalidAmount},
+		{name: "sum at the money limit", initial: math.MaxInt64 - 1, amount: 1,
+			wantBalance: math.MaxInt64},
+		{name: "sum over the money limit", initial: math.MaxInt64, amount: 1,
+			wantBalance: math.MaxInt64, wantErr: domain.ErrInvalidAmount},
 	}
 
 	for _, tt := range tests {
@@ -96,6 +103,57 @@ func TestWalletPay(t *testing.T) {
 			}
 			if w.Balance != tt.wantBalance {
 				t.Errorf("|got %10d| want %10d|", w.Balance, tt.wantBalance)
+			}
+		})
+	}
+}
+
+func TestAddSpent(t *testing.T) {
+	tests := []struct {
+		name           string
+		initial        domain.Money
+		amount         domain.Money
+		balance        domain.Money
+		wantTotalSpent domain.Money
+		wantErr        error
+	}{
+		{
+			name: "zero amount", initial: 1000, amount: 0,
+			wantTotalSpent: 1000, wantErr: domain.ErrInvalidAmount,
+		},
+		{
+			name: "negative amount", initial: 1000, amount: -200,
+			wantTotalSpent: 1000, wantErr: domain.ErrInvalidAmount,
+		},
+		{
+			name: "negative total is not grown", initial: -100, amount: 50,
+			wantTotalSpent: -100, wantErr: domain.ErrInvalidAmount,
+		},
+		{
+			// Кошелёк и потраченное — разные суммы: ошибка в выборе
+			// операнда сложила бы их вместе и потеряла историю покупок.
+			name: "wallet balance is not mixed in", initial: 1000, amount: 200, balance: 5555,
+			wantTotalSpent: 1200,
+		},
+		{
+			name: "MaxInt64 border", initial: math.MaxInt64 - 1, amount: 1,
+			wantTotalSpent: math.MaxInt64,
+		},
+		{
+			name: "over MaxInt64", initial: math.MaxInt64, amount: 1,
+			wantTotalSpent: math.MaxInt64, wantErr: domain.ErrInvalidAmount,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := domain.User{TotalSpent: tt.initial, Wallet: domain.Wallet{Balance: tt.balance}}
+			if err := u.AddSpent(tt.amount); !errors.Is(err, tt.wantErr) {
+				t.Errorf("got %v, want %v", err, tt.wantErr)
+			}
+
+			if u.TotalSpent != tt.wantTotalSpent {
+				t.Errorf("got %d, want %d", u.TotalSpent, tt.wantTotalSpent)
 			}
 		})
 	}
